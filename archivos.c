@@ -114,7 +114,10 @@ int main(int argc,char*argv[]){
 	char* inputFile = NULL;
 
   opterr = 0;
-
+	if(argc < 7){
+		fprintf(stderr, "Error: faltan parámetros de entrada \nUso: ./competencia -g cantidadEquipos -h cantidadHebras -i archivo de entrada\n");
+		return 1;
+	}
 	//Los parámetros se pasan así ./salida -g entero -h entero -i string
 	while ((c = getopt (argc, argv, ":g:h:i:")) != -1)
 	    switch (c)
