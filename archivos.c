@@ -3,6 +3,29 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <pthread.h>
+
+/*
+ Esta es la estructura para poder pasar todos los datos cuando se realiza el 
+ llamado a la función
+ */
+typedef struct thread_data{
+	int id_equipo;
+	int id_hebra;
+	int *lista;
+} t_data;
+
+/*
+ Función que es la llamada al crear cada hebra 
+ la cual será encargada de poder generar poder
+ recorrer las listas.
+ Entrada: una estructura que nos indica el id de la hebra
+          el id del equipo al cual pertenece y por ultimo
+          le pasa las listas con las cuales debe trabajar.
+ */
+
+void *funcionThread(void *tdata);
+
 /*
 Función que permite obtener la matriz de listas
 que es contenido en el archivo de entrada
@@ -139,13 +162,54 @@ int main(int argc,char*argv[]){
 	}
 
 	printf("\n");
-
- 	int * S = intersectar(listas[4],listas[6],0,listas[4][0]+1);
+	
+	//comenzar a crear equipos con hebras
+	
+	int ei = 3; //cantidad de equipos
+	int hi = 4; //cantidad de hebras por equipos
+	
+	int cant = ei*hi; //cantidad total de hebras
+	//se crea un matriz con los id del equipo y de la hebra
+	int **arrId = malloc(cant*sizeof(int*));
+	int cont = 0;
+	for (i = 0; i < ei; i++) {
+		for(j = 0;j<hi;j++){
+			arrId[cont] = malloc(2*sizeof(int));
+			arrId[cont][0] = i; //s guardara el equipo
+			arrId[cont][1] = j; //s guardara el numero de hebra del equipo
+			cont++; 
+		}
+	}
+	
+	//se crea un array de hebras
+	pthread_t *arr_threads = (pthread_t *)malloc(cant*sizeof(pthread_t));
+	//comenzar a crear las hebras por equipo
+	t_data* tdata;
+	cont = 0; 
+	for(i = 0;i < ei;i++){
+		for(j=0;j < hi;j++){
+			tdata = (t_data *) malloc(sizeof(t_data));
+			tdata->id_equipo = arrId[cont][0];
+			tdata->id_hebra = arrId[cont][1];
+			tdata->lista = listas[1];
+			pthread_create(&arr_threads[cont], NULL, &funcionThread, (void *)tdata);
+			cont++;
+		}
+	}
+	
+	for (i = 0; i < cant; i++) {
+		pthread_join(arr_threads[i], NULL); //espera a que la hebra termine
+	}
+	
+	
+	printf("Se termino con todas las hebras\n");
+	
+ 	/*int * S = intersectar(listas[4],listas[6],0,listas[4][0]+1);
 	printf("Se intersectan las listas 4 y 6\n");
 	printf("Cantidad de elementos de la intersección %d\n",S[0]);
 	for(i=1;i<=S[0];i++){
 		printf("Elementos S[%d] = %d\n",i,S[i]);
-	}
+	}*/
   return 0;
 }
 
@@ -287,4 +351,20 @@ int BusquedaBinaria(int *k, int kInicial, int kFinal, int buscar){
 						return 1;
 		}
 		return -1;
+}
+
+void *funcionThread(void *tdata) {
+	t_data *data = (t_data*) tdata;
+	printf("soy una hebra, mi id %d y mi equipo es %d\n", data->id_hebra, data->id_equipo);
+	int *lista = (int *)data->lista;
+	int largo = lista[0];
+	int i;
+	for(i = 1; i <= largo;i++){
+		if(data->id_hebra == 0 && data->id_equipo == 0 && i == 1){
+			lista[1] = 1000;
+		}
+		printf("%d\n",lista[i]);
+	}
+	
+	pthread_exit(NULL);
 }
