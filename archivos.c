@@ -36,7 +36,12 @@ void quickSortMat (int **a, int n);
 //A: arreglo 1
 //B: arreglo 2
 //Retorna el arreglo resultado de la intersección
-int* intersectar(int* A, int* B);
+int* intersectar(int* A, int* B, int inicio, int final);
+
+//Función que permite realizar la búsqueda binaria
+//Recibe el puntero del arreglo, el final y el inicio del arreglo, y
+//El valor que será buscados
+int BusquedaBinaria(int *k, int kInicial, int kFinal, int buscar);
 
 /*Función principal*/
 int main(int argc,char*argv[]){
@@ -132,36 +137,15 @@ int main(int argc,char*argv[]){
 				printf("%d \n",listas[i][j]);
 			}
 	}
-	printf("No entiendo que está pasando\n");
-	printf("Se procede a intersectar la lista\n");
-	for(j=0;j<=listas[4][0];j++){
-		if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",4,listas[4][j]);
-		printf("%d ",listas[4][j]);
-	}
+
 	printf("\n");
 
-	for(j=0;j<=listas[5][0];j++){
-		if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",5,listas[5][j]);
-		printf("%d ",listas[5][j]);
-	}
-	printf("\n");
-
-	int *S = listas[0];
-	int * aux;
-	for(i = 1;i<cantListas;i++){
-		aux = intersectar(S,listas[i]);
-
-			printf("Elementos aux[0] = %d\n",aux[0]);
-
-		free(aux);
-	}
-
-	printf("\n\nCantidad de elementos de la interesección %d\n",aux[0]);
-	printf("\n\nCantidad de listas %d\n",cantListas);
-
-	/*for(i=1;i<=S[0];i++){
+ 	int * S = intersectar(listas[4],listas[6],0,listas[4][0]+1);
+	printf("Se intersectan las listas 4 y 6\n");
+	printf("Cantidad de elementos de la intersección %d\n",S[0]);
+	for(i=1;i<=S[0];i++){
 		printf("Elementos S[%d] = %d\n",i,S[i]);
-	}*/
+	}
   return 0;
 }
 
@@ -276,22 +260,31 @@ void quickSortMat (int **a, int n) {
     quickSortMat(a + i, n - i);
 }
 
-int* intersectar(int* A, int* B){
+int* intersectar(int* A, int* B, int inicio, int final){
 	int *aux = malloc(sizeof(int)*(A[0]+B[0]+1));
 	aux[0] = 0;
 	int i,j,k = 1;
 	for(i=1;i<=A[0];i++){
-		for(j=1;j<=B[0];j++){
-			printf("A[%d] = %d y B[%d] = %d\n",i,A[i],j,B[j]);
-			if(A[i]==B[j]){
-				printf("Encontré elementos iguales  en A[%d] = %d y B[%d] = %d\n",i,A[i],j,B[j]);
-				aux[k] = A[i];
-				k++;
-				aux[0] = aux[0]+1;
-				break;
-			}
+		if(BusquedaBinaria(B,inicio,final,A[i]) == 1){
+			aux[k] = A[i];
+			k++;
+			aux[0] = aux[0]+1;
 		}
 	}
 	aux = realloc(aux,aux[0]+1);
 	return aux;
+}
+
+int BusquedaBinaria(int *k, int kInicial, int kFinal, int buscar){
+		int inicio = kInicial+1, final = kFinal;
+		while(inicio <= final){
+			int mitad = (inicio + final)/2;
+				if (k[mitad] > buscar)
+						final = mitad - 1;
+				else if (k[mitad] < buscar)
+						inicio = mitad + 1;
+				else
+						return 1;
+		}
+		return -1;
 }
