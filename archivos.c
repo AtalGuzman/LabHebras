@@ -96,6 +96,8 @@ int main(int argc,char*argv[]){
 	char* inputFile = NULL;
 
   opterr = 0;
+
+	//Los parámetros se pasan así ./salida -g entero -h entero -i string
 	while ((c = getopt (argc, argv, ":g:h:i:")) != -1)
 	    switch (c)
 	      {
@@ -125,6 +127,8 @@ int main(int argc,char*argv[]){
 	        abort ();
 	      }
 
+		///Prueba para el paso de parámetros
+	printf("Se crearán %d equipos de hebras, de %d hebras cada uno y se leerá desde el archivo %s\n",Ei,Hi,inputFile);
   int ** listas = leerListas("prueba");
 	int i,j,k;
 	int cantListas = contarLineas(fopen("prueba","r"));
