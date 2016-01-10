@@ -3,6 +3,26 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <pthread.h>
+
+/*
+ Función para poder realizar la ejecución de las hebras.
+ */
+
+void *funcionThread(void *argumentos) {
+	//char *argInterno = (char *)argumentos;
+	int *argInt = (int *)argumentos;
+	printf("soy una hebra, mi id %d y mi equipo es %d\n", argInt[1], argInt[0]);
+	//varGlobal++;
+	//pthread_mutex_lock(&m1);
+	//Comienza sección crítica
+	//varGlobal = varGlobal+1;
+	//pthread_mutex_unlock(&m1); //fin sección crítica
+	
+	//sleep(1);
+	pthread_exit(NULL);
+}
+
 /*
 Función que permite obtener la matriz de listas
 que es contenido en el archivo de entrada
@@ -98,8 +118,15 @@ int main(int argc,char*argv[]){
 	        abort ();
 	      }
 
+<<<<<<< HEAD
   int ** listas = leerListas("prueba");
 	int i,j,k;
+=======
+	//printf("Serán creados %d equipos, %d hebras y se abrirá el archivo %s\n",Ei,Hi,inputFile);
+
+	int ** listas = leerListas("prueba");
+	int i,j;
+>>>>>>> 9e1c5dbe04668429e754a064fd34dee57d505080
 	int cantListas = contarLineas(fopen("prueba","r"));
 	printf("Cantidad de listas leídas %d\n",cantListas);
 
@@ -132,6 +159,7 @@ int main(int argc,char*argv[]){
 				printf("%d \n",listas[i][j]);
 			}
 	}
+<<<<<<< HEAD
 	printf("No entiendo que está pasando\n");
 	printf("Se procede a intersectar la lista\n");
 	for(j=0;j<=listas[4][0];j++){
@@ -162,6 +190,46 @@ int main(int argc,char*argv[]){
 	/*for(i=1;i<=S[0];i++){
 		printf("Elementos S[%d] = %d\n",i,S[i]);
 	}*/
+=======
+	
+	//comenzar a crear equipos con hebras
+	
+	int ei = 3; //cantidad de equipos
+	int hi = 4; //cantidad de hebras por equipos
+	
+	//int i,j;
+	int cant = ei*hi; //cantidad total de hebras
+	//se crea un matriz con los id del equipo y de la hebra
+	int **arrId = malloc(cant*sizeof(int*));
+	int cont = 0;
+	for (i = 0; i < ei; i++) {
+		for(j = 0;j<hi;j++){
+			arrId[cont] = malloc(2*sizeof(int));
+			arrId[cont][0] = i; //s guardara el equipo
+			arrId[cont][1] = j; //s guardara el numero de hebra del equipo
+			cont++; 
+		}
+	}
+	
+	//se crea un array de hebras
+	pthread_t *arr_threads = (pthread_t *)malloc(cant*sizeof(pthread_t));
+	//comenzar a crear las hebras por equipo
+	cont = 0; 
+	for(i = 0;i < ei;i++){
+		for(j=0;j < hi;j++){
+			pthread_create(&arr_threads[cont], NULL, &funcionThread, arrId[cont]);
+			cont++;
+		}
+	}
+	
+	for (i = 0; i < cant; i++) {
+		pthread_join(arr_threads[i], NULL); //espera a que la hebra termine
+	}
+	
+	
+	printf("Se termino con todas las hebras\n");
+	
+>>>>>>> 9e1c5dbe04668429e754a064fd34dee57d505080
   return 0;
 }
 
