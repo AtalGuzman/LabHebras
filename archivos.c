@@ -12,18 +12,36 @@
 typedef struct thread_data{
 	int id_equipo;
 	int id_hebra;
+	int inicio;
+	int fin;
+	int cantidadDeHebras;
+	int *listaGeneral;
+	int *interseccionLocal;
 	int *lista;
 } t_data;
 
+typedef struct thread_data_equipo{
+ int id_equipo;
+ int *lista;
+ int *interseccion;
+ int cantidadHebras;
+} t_data_equipo;
+
+pthread_mutex_t lock;
+pthread_mutex_t lock2;
+pthread_mutex_t lock3;
+
+int ** listas;
+int cantListas;
 /*
  Función que es la llamada al crear cada hebra
- la cual será encargada de poder generar poder
- recorrer las listas.
+ la cual será encargada de poder recorrer las listas.
  Entrada: una estructura que nos indica el id de la hebra
           el id del equipo al cual pertenece y por ultimo
           le pasa las listas con las cuales debe trabajar.
  */
-void *funcionThread(void *tdata);
+void *equipos(void *t_data_equipo);
+void *concursantes(void *tdata);
 
 /*
 Función que permite obtener la matriz de listas
@@ -129,9 +147,9 @@ int main(int argc,char*argv[]){
 
 		///Prueba para el paso de parámetros
 	printf("Se crearán %d equipos de hebras, de %d hebras cada uno y se leerá desde el archivo %s\n",Ei,Hi,inputFile);
-  int ** listas = leerListas("prueba");
+  listas = leerListas("prueba");
 	int i,j,k;
-	int cantListas = contarLineas(fopen("prueba","r"));
+	cantListas = contarLineas(fopen("prueba","r"));
 	printf("Cantidad de listas leídas %d\n",cantListas);
 
 	//Se eliminan los elementos repetidos de cada una de las listas leídas
@@ -145,8 +163,8 @@ int main(int argc,char*argv[]){
 		listas[i] =eliminarRepetidos(listas[i]);
 		quickSort(listas[i]+1,listas[i][0]);
 			for(j=0;j<=listas[i][0];j++){
-				if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
-				printf("%d \n",listas[i][j]);
+				if(j==0) printf("\nLista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
+				printf("%d ",listas[i][j]);
 			}
 	}
 
@@ -159,8 +177,8 @@ int main(int argc,char*argv[]){
 	printf("\n");
 	for(i=0;i<cantListas;i++){
 			for(j=0;j<=listas[i][0];j++){
-				if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
-				printf("%d \n",listas[i][j]);
+				if(j==0) printf("\nLista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
+				printf("%d ",listas[i][j]);
 			}
 	}
 
@@ -173,38 +191,35 @@ int main(int argc,char*argv[]){
 
 	int cant = ei*hi; //cantidad total de hebras
 	//se crea un matriz con los id del equipo y de la hebra
-	int **arrId = malloc(cant*sizeof(int*));
+	int *arrId = malloc(cant*sizeof(int));
 	int cont = 0;
 	for (i = 0; i < ei; i++) {
-		for(j = 0;j<hi;j++){
-			arrId[cont] = malloc(2*sizeof(int));
-			arrId[cont][0] = i; //s guardara el equipo
-			arrId[cont][1] = j; //s guardara el numero de hebra del equipo
-			cont++;
+			arrId[i] = i; //s guard
 		}
-	}
 
+	printf("Crea las id de las hebras\n");
 	//se crea un array de hebras
-	pthread_t *arr_threads = (pthread_t *)malloc(cant*sizeof(pthread_t));
+	pthread_t *arr_threads = (pthread_t *)malloc(ei*sizeof(pthread_t));
+
 	//comenzar a crear las hebras por equipo
-	t_data* tdata;
+	t_data_equipo* tDataEquipo;
+	printf("Crea el arreglo de hebras\n");
 	cont = 0;
 	for(i = 0;i < ei;i++){
-		for(j=0;j < hi;j++){
-			tdata = (t_data *) malloc(sizeof(t_data));
-			tdata->id_equipo = arrId[cont][0];
-			tdata->id_hebra = arrId[cont][1];
-			tdata->lista = listas[1];
-			pthread_create(&arr_threads[cont], NULL, &funcionThread, (void *)tdata);
+			tDataEquipo = (t_data_equipo *) malloc(sizeof(t_data_equipo));
+			printf("Crea la estructura\n");
+			tDataEquipo->id_equipo = arrId[cont];
+			printf("la id del equipo actual es %d y el valor de i es %d: \n",tDataEquipo->id_equipo, cont);
+			tDataEquipo->lista = listas[0];
+			tDataEquipo->interseccion = malloc(sizeof(int)*(listas[cantListas-1][0]+1));
+			tDataEquipo->cantidadHebras = hi;
+			pthread_create(&arr_threads[cont], NULL, &equipos, (void *)tDataEquipo);
 			cont++;
 		}
+
+	for(i=0;i<ei;i++){
+		pthread_join(arr_threads[i], NULL);
 	}
-
-	for (i = 0; i < cant; i++) {
-		pthread_join(arr_threads[i], NULL); //espera a que la hebra termine
-	}
-
-
 	printf("Se termino con todas las hebras\n");
 
  	/*int * S = intersectar(listas[4],listas[6],0,listas[4][0]+1);
@@ -326,14 +341,16 @@ void quickSortMat (int **a, int n) {
     quickSortMat(a, i);
     quickSortMat(a + i, n - i);
 }
-
+//Inicio y final de B
 int* intersectar(int* A, int* B, int inicio, int final){
-	int *aux = malloc(sizeof(int)*(A[0]+B[0]+1));
+	int *aux = malloc(sizeof(int)*(A[0]+1));
 	aux[0] = 0;
 	int i,j,k = 1;
 	for(i=1;i<=A[0];i++){
 		if(BusquedaBinaria(B,inicio,final,A[i]) == 1){
+			printf("Se agrega el valor A[%d] = %d\n",i,A[i]);
 			aux[k] = A[i];
+			printf("A aux[%d] = %d\n",k,aux[k]);
 			k++;
 			aux[0] = aux[0]+1;
 		}
@@ -343,7 +360,7 @@ int* intersectar(int* A, int* B, int inicio, int final){
 }
 
 int BusquedaBinaria(int *k, int kInicial, int kFinal, int buscar){
-		int inicio = kInicial+1, final = kFinal;
+		int inicio = kInicial, final = kFinal;
 		while(inicio <= final){
 			int mitad = (inicio + final)/2;
 				if (k[mitad] > buscar)
@@ -356,18 +373,61 @@ int BusquedaBinaria(int *k, int kInicial, int kFinal, int buscar){
 		return -1;
 }
 
-void *funcionThread(void *tdata) {
-	t_data *data = (t_data*) tdata;
-	printf("soy una hebra, mi id %d y mi equipo es %d\n", data->id_hebra, data->id_equipo);
-	int *lista = (int *)data->lista;
-	int largo = lista[0];
-	int i;
-	for(i = 1; i <= largo;i++){
-		if(data->id_hebra == 0 && data->id_equipo == 0 && i == 1){
-			lista[1] = 1000;
-		}
-		printf("%d\n",lista[i]);
+void *equipos(void *tDataEquipo) {
+	t_data_equipo *dataEquipo = (t_data_equipo*) tDataEquipo;
+	pthread_mutex_lock(&lock);
+			int i;
+			int *S = (int *)dataEquipo->lista;
+			int *S2 = (int*)dataEquipo->interseccion;
+			int CH = (int)dataEquipo->cantidadHebras;
+			int* id = malloc(sizeof(CH));
+			pthread_t *arr_Concursantes = (pthread_t *)malloc(CH*sizeof(pthread_t));
+			printf("La cantidad de hebras del equipo %d es de %d\n",dataEquipo->id_equipo,CH);
+			for(i = 0;i<CH;i++) id[i] = i;
+			for(i=0;i<CH;i++){
+				t_data* concursante = malloc(sizeof(t_data));
+				concursante->id_equipo = dataEquipo->id_equipo;
+				concursante->id_hebra = id[i];
+				concursante->lista = NULL;
+				concursante->inicio = 0;
+				concursante->fin = 0;
+				concursante->listaGeneral = S;
+				concursante->interseccionLocal = S2;
+				concursante->cantidadDeHebras = dataEquipo->cantidadHebras;
+				pthread_create(&arr_Concursantes[i],NULL,&concursantes,(void *)concursante);
+			}
+	pthread_mutex_unlock(&lock);
+	for(i=0;i<CH;i++){
+		pthread_join(arr_Concursantes[i], NULL);
+	}
+	pthread_exit(NULL);
 	}
 
+void *concursantes(void* tData){
+	t_data *concursante = (t_data*) tData;
+	pthread_mutex_lock(&lock2);
+	printf("\nSoy la hebra %d del equipo %d\n",concursante->id_hebra,concursante->id_equipo);
+	int i,j;
+	for(i=1;i<cantListas;i++){
+			printf("%d ",listas[i][0]);
+			int cantidadElementos = listas[i][0];
+			int	companeros = concursante->cantidadDeHebras;
+			printf("La cantidad de elementos de la lista %d es %d\n",i,cantidadElementos);
+			printf("La cantidad de compañeros de la hebra %d es %d\n",concursante->id_hebra,concursante->cantidadDeHebras);;
+			int porcion = cantidadElementos/companeros;
+			int inicio = (concursante->id_hebra)*porcion+1;
+			int final = (concursante->id_hebra+1)*porcion;
+			printf("De la lista %d puedo tomar elementos desde %d hasta %d final\n",i,inicio,final);
+			printf("Esos valores son:\n");
+			pthread_mutex_lock(&lock3);
+					printf("Aquí hago la intersección y tengo que realizar la escritura en el arreglo auxiliar\n");
+					for(j = inicio; j<=final;j++) printf("lista[%d][%d] = %d\n",i,j,listas[i][j]);
+					for(j = 0; j<=concursante->listaGeneral[0];j++) printf(" %d\n",concursante->listaGeneral[j]);
+					int * aux = intersectar(concursante->listaGeneral,listas[i],inicio,final);
+					printf("Los valore intersectados son:\n");
+					for(j = 0; j<=aux[0];j++) printf(" %d \n",aux[j]);
+			pthread_mutex_unlock(&lock3);
+	}
+	pthread_mutex_unlock(&lock2);
 	pthread_exit(NULL);
 }
