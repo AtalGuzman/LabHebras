@@ -68,8 +68,7 @@ int*  eliminarRepetidos(int * A){
 			if(B[k]==A[i]){
 				flag = 0;
 				break;
-			}
-			else{
+			} else{
 				flag = 1;
 			}
 		}
@@ -111,10 +110,57 @@ void quickSort (int *a, int n) {
     quickSort(a + i, n - i);
 }
 
+//Modificación de la función anterior, que permite crear el ordenamiento de la
+//matriz según el largo de las listas ingresadas
+void quickSortMat (int **a, int n) {
+    int i, j, *p, *t;
+    if (n < 2)
+        return;
+    p = a[n / 2];
+    for (i = 0, j = n - 1;; i++, j--) {
+        while (a[i][0] < p[0])
+            i++;
+        while (p[0] < a[j][0])
+            j--;
+        if (i >= j)
+            break;
+        t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+    }
+    quickSortMat(a, i);
+    quickSortMat(a + i, n - i);
+}
+
 
 
 /*Función principal*/
 int main(int argc,char*argv[]){
+
+	printf("      ___           ___           ___           ___           ___\n");
+	printf("     /\\__\\         /\\  \\         /\\  \\         /\\  \\         /\\  \\\n");
+	printf("    /:/  /        /::\\  \\       /::\\  \\       /::\\  \\       /::\\  \\\n");
+	printf("   /:/__/        /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\\n");
+	printf("  /::\\  \\ ___   /::\\~\\:\\  \\   /::\\~\\:\\__\\   /::\\~\\:\\  \\   /::\\~\\:\\  \\\n");
+	printf(" /:/\\:\\  /\\__\\ /:/\\:\\ \\:\\__\\ /:/\\:\\ \\:|__| /:/\\:\\ \\:\\__\\ /:/\\:\\ \\:\\__\\\n");
+	printf(" \\/__\\:\\/:/  / \\:\\~\\:\\ \\/__/ \\:\\~\\:\\/:/  / \\/_|::\\/:/  / \\/__\\:\\/:/  /\n");
+	printf("      \\::/  /   \\:\\ \\:\\__\\    \\:\\ \\::/  /     |:|::/  /       \\::/  /\n");
+	printf("      /:/  /     \\:\\ \\/__/     \\:\\/:/  /      |:|\\/__/        /:/  /\n");
+	printf("     /:/  /       \\:\\__\\        \\::/__/       |:|  |         /:/  /\n");
+	printf("     \\/__/         \\/__/         ~~            \\|__|         \\/__/\n\n");
+	printf("      ___       ___           ___           ___                       ___\n");
+	printf("     /\\__\\     /\\  \\         /\\__\\         /\\  \\          ___        /\\  \\\n");
+	printf("    /:/  /    /::\\  \\       /::|  |       /::\\  \\        /\\  \\      /::\\  \\\n");
+	printf("   /:/  /    /:/\\:\\  \\     /:|:|  |      /:/\\:\\  \\       \\:\\  \\    /:/\\:\\  \\\n");
+	printf("  /:/  /    /::\\~\\:\\  \\   /:/|:|  |__   /:/  \\:\\__\\      /::\\__\\  /::\\~\\:\\  \\\n");
+	printf(" /:/__/    /:/\\:\\ \\:\\__\\ /:/ |:| /\\__\\ /:/__/ \\:|__|  __/:/\\/__/ /:/\\:\\ \\:\\__\\\n");
+	printf(" \\:\\  \\    \\/__\\:\\/:/  / \\/__|:|/:/  / \\:\\  \\ /:/  / /\\/:/  /    \\/__\\:\\/:/  /\n");
+	printf("  \\:\\  \\        \\::/  /      |:/:/  /   \\:\\  /:/  /  \\::/__/          \\::/  /\n");
+	printf("   \\:\\  \\       /:/  /       |::/  /     \\:\\/:/  /    \\:\\__\\          /:/  /\n");
+	printf("    \\:\\__\\     /:/  /        /:/  /       \\::/__/      \\/__/         /:/  /\n");
+	printf("     \\/__/     \\/__/         \\/__/         ~~                        \\/__/\n");
+
+
 	int Ei, Hi, c;
 	char* inputFile = NULL;
 	int aflag = 0;
@@ -160,13 +206,33 @@ int main(int argc,char*argv[]){
 	printf("Cantidad de listas leídas %d\n",cantListas);
 
 	//Se eliminan los elementos repetidos de cada una de las listas leídas
+	printf("\n");
+	printf("\n ****************************************\n");
+	printf("\n *********LISTAS SIN REPETIDOS***********\n");
+	printf("\n *************Y ORDENADOS****************\n");
+	printf("\n ****************************************\n");
+	printf("\n");
 	for(i=0;i<cantListas;i++){
-	listas[i] =eliminarRepetidos(listas[i]);
-	quickSort(listas[i]+1,listas[i][0]);
-		for(j=0;j<=listas[i][0];j++){
-			if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
-			printf("%d \n",listas[i][j]);
-		}
+		listas[i] =eliminarRepetidos(listas[i]);
+		quickSort(listas[i]+1,listas[i][0]);
+			for(j=0;j<=listas[i][0];j++){
+				if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
+				printf("%d \n",listas[i][j]);
+			}
 	}
+
+	quickSortMat(listas,cantListas);
+	printf("\n");
+	printf("\n ****************************************\n");
+	printf("\n ******LISTAS ORDENADAS SEGÚN LARGO******\n");
+	printf("\n ****************************************\n");
+	printf("\n");
+	for(i=0;i<cantListas;i++){
+			for(j=0;j<=listas[i][0];j++){
+				if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
+				printf("%d \n",listas[i][j]);
+			}
+	}
+
   return 0;
 }
