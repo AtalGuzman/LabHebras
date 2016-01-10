@@ -6,7 +6,7 @@
 #include <pthread.h>
 
 /*
- Esta es la estructura para poder pasar todos los datos cuando se realiza el 
+ Esta es la estructura para poder pasar todos los datos cuando se realiza el
  llamado a la función
  */
 typedef struct thread_data{
@@ -16,14 +16,13 @@ typedef struct thread_data{
 } t_data;
 
 /*
- Función que es la llamada al crear cada hebra 
+ Función que es la llamada al crear cada hebra
  la cual será encargada de poder generar poder
  recorrer las listas.
  Entrada: una estructura que nos indica el id de la hebra
           el id del equipo al cual pertenece y por ultimo
           le pasa las listas con las cuales debe trabajar.
  */
-
 void *funcionThread(void *tdata);
 
 /*
@@ -97,16 +96,16 @@ int main(int argc,char*argv[]){
 	char* inputFile = NULL;
 
   opterr = 0;
-	while ((c = getopt (argc, argv, ":a:b:c:")) != -1)
+	while ((c = getopt (argc, argv, ":g:h:i:")) != -1)
 	    switch (c)
 	      {
-	      case 'a':
+	      case 'g':
 					Ei = atoi(optarg);
 	        break;
-	      case 'b':
+	      case 'h':
 					Hi = atoi(optarg);
 	        break;
-	      case 'c':
+	      case 'i':
 	        inputFile = optarg;
 	        break;
 				case ':':
@@ -162,12 +161,12 @@ int main(int argc,char*argv[]){
 	}
 
 	printf("\n");
-	
+
 	//comenzar a crear equipos con hebras
-	
+
 	int ei = 3; //cantidad de equipos
 	int hi = 4; //cantidad de hebras por equipos
-	
+
 	int cant = ei*hi; //cantidad total de hebras
 	//se crea un matriz con los id del equipo y de la hebra
 	int **arrId = malloc(cant*sizeof(int*));
@@ -177,15 +176,15 @@ int main(int argc,char*argv[]){
 			arrId[cont] = malloc(2*sizeof(int));
 			arrId[cont][0] = i; //s guardara el equipo
 			arrId[cont][1] = j; //s guardara el numero de hebra del equipo
-			cont++; 
+			cont++;
 		}
 	}
-	
+
 	//se crea un array de hebras
 	pthread_t *arr_threads = (pthread_t *)malloc(cant*sizeof(pthread_t));
 	//comenzar a crear las hebras por equipo
 	t_data* tdata;
-	cont = 0; 
+	cont = 0;
 	for(i = 0;i < ei;i++){
 		for(j=0;j < hi;j++){
 			tdata = (t_data *) malloc(sizeof(t_data));
@@ -196,14 +195,14 @@ int main(int argc,char*argv[]){
 			cont++;
 		}
 	}
-	
+
 	for (i = 0; i < cant; i++) {
 		pthread_join(arr_threads[i], NULL); //espera a que la hebra termine
 	}
-	
-	
+
+
 	printf("Se termino con todas las hebras\n");
-	
+
  	/*int * S = intersectar(listas[4],listas[6],0,listas[4][0]+1);
 	printf("Se intersectan las listas 4 y 6\n");
 	printf("Cantidad de elementos de la intersección %d\n",S[0]);
@@ -365,6 +364,6 @@ void *funcionThread(void *tdata) {
 		}
 		printf("%d\n",lista[i]);
 	}
-	
+
 	pthread_exit(NULL);
 }
