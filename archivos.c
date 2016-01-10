@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 /*
 Función que permite obtener la matriz de listas
 que es contenido en el archivo de entrada
@@ -11,7 +12,7 @@ entrada: nombre del archivo que debe ser leído, se asume que está
 int ** leerListas(char* entrada){
 	FILE* archivoEntrada;
 	if((archivoEntrada = fopen(entrada,"r"))==NULL){
-		printf("Error: Verifica la existencia del archivo. \n");
+		fprintf(stderr, "Error: Verifica la existencia del archivo. \n" );
 	} else{
 		int lineas = contarLineas(archivoEntrada);
 		fopen(entrada,"r");
@@ -84,20 +85,84 @@ int*  eliminarRepetidos(int * A){
 	}
 	free(A); //Se elimina la lista de entrada
 	A = NULL; //Se deja apuntando a null
-	B = realloc(B,B[0]+1); //Se realoca 1313 la memoria, para la lista nueva
+	B = realloc(B,B[0]+1); //Se realoca 1313 woooooh!(disculpas me emocioné) la memoria,
+													//para la lista nueva
 	return B;
 }
+//Función obtenida de roseta code.
+//Es utilizada para el ordenamiento de las listas
+void quickSort (int *a, int n) {
+    int i, j, p, t;
+    if (n < 2)
+        return;
+    p = a[n / 2];
+    for (i = 0, j = n - 1;; i++, j--) {
+        while (a[i] < p)
+            i++;
+        while (p < a[j])
+            j--;
+        if (i >= j)
+            break;
+        t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+    }
+    quickSort(a, i);
+    quickSort(a + i, n - i);
+}
 
-/*Fimco+pm ŕomcoáñ*/
+
+
+/*Función principal*/
 int main(int argc,char*argv[]){
+	int Ei, Hi, c;
+	char* inputFile = NULL;
+	int aflag = 0;
+  int bflag = 0;
+  char *cvalue = NULL;
+  int index;
+
+  opterr = 0;
+	while ((c = getopt (argc, argv, ":a:b:c:")) != -1)
+	    switch (c)
+	      {
+	      case 'a':
+					Ei = atoi(optarg);
+	        break;
+	      case 'b':
+					Hi = atoi(optarg);
+	        break;
+	      case 'c':
+	        inputFile = optarg;
+	        break;
+				case ':':
+				fprintf(stderr, "%s: option '-%c' requires an argument\n",
+                argv[0], optopt);
+				return 1;
+        break;
+	      case '?':
+	      	if (isprint (optopt))
+	          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+	        else
+	          fprintf (stderr,
+	                   "Unknown option character `\\x%c'.\n",
+	                   optopt);
+	        return 1;
+	      default:
+	        abort ();
+	      }
+
+	//printf("Serán creados %d equipos, %d hebras y se abrirá el archivo %s\n",Ei,Hi,inputFile);
+
   int ** listas = leerListas("prueba");
 	int i,j;
 	int cantListas = contarLineas(fopen("prueba","r"));
-
 	printf("Cantidad de listas leídas %d\n",cantListas);
+
 	//Se eliminan los elementos repetidos de cada una de las listas leídas
 	for(i=0;i<cantListas;i++){
 	listas[i] =eliminarRepetidos(listas[i]);
+	quickSort(listas[i]+1,listas[i][0]);
 		for(j=0;j<=listas[i][0];j++){
 			if(j==0) printf("Lista %d, con repetidos eliminados.\nCantidad de elementos %d\n",i,listas[i][j]);
 			printf("%d \n",listas[i][j]);
