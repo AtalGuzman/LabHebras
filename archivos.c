@@ -30,9 +30,11 @@ typedef struct thread_data_equipo{
 pthread_mutex_t lock;
 pthread_mutex_t lock2;
 pthread_mutex_t lock3;
+pthread_barrier_t barrier;
 
 int ** listas;
 int cantListas;
+int* ult;
 /*
  Función que es la llamada al crear cada hebra
  la cual será encargada de poder recorrer las listas.
@@ -110,7 +112,7 @@ int main(int argc,char*argv[]){
 	printf("     \\/__/     \\/__/         \\/__/         ~~                        \\/__/\n");
 
 
-	int Ei, Hi, c;
+	int ei, ei, c;
 	char* inputFile = NULL;
 
   opterr = 0;
@@ -123,10 +125,10 @@ int main(int argc,char*argv[]){
 	    switch (c)
 	      {
 	      case 'g':
-					Ei = atoi(optarg);
+					ei = atoi(optarg);
 	        break;
 	      case 'h':
-					Hi = atoi(optarg);
+					hi = atoi(optarg);
 	        break;
 	      case 'i':
 	        inputFile = optarg;
@@ -171,6 +173,7 @@ int main(int argc,char*argv[]){
 			}
 	}
 
+
 	//Se ordenan las listas según sus largos
 	quickSortMat(listas,cantListas);
 	printf("\n");
@@ -189,9 +192,11 @@ int main(int argc,char*argv[]){
 
 	//comenzar a crear equipos con hebras
 
-	int ei = 3; //cantidad de equipos
-	int hi = 4; //cantidad de hebras por equipos
 
+	ult = malloc(sizeof(int)*cantListas);
+	for(i=0;i<ei;i++){
+		ult[i] = 1;
+	}
 	int cant = ei*hi; //cantidad total de hebras
 	//se crea un matriz con los id del equipo y de la hebra
 	int *arrId = malloc(cant*sizeof(int));
@@ -200,19 +205,15 @@ int main(int argc,char*argv[]){
 			arrId[i] = i; //s guard
 		}
 
-	printf("Crea las id de las hebras\n");
 	//se crea un array de hebras
 	pthread_t *arr_threads = (pthread_t *)malloc(ei*sizeof(pthread_t));
 
 	//comenzar a crear las hebras por equipo
 	t_data_equipo* tDataEquipo;
-	printf("Crea el arreglo de hebras\n");
 	cont = 0;
 	for(i = 0;i < ei;i++){
 			tDataEquipo = (t_data_equipo *) malloc(sizeof(t_data_equipo));
-			printf("Crea la estructura\n");
 			tDataEquipo->id_equipo = arrId[cont];
-			printf("la id del equipo actual es %d y el valor de i es %d: \n",tDataEquipo->id_equipo, cont);
 			tDataEquipo->lista = listas[0];
 			tDataEquipo->interseccion = malloc(sizeof(int)*(listas[cantListas-1][0]+1));
 			tDataEquipo->cantidadHebras = hi;
@@ -223,6 +224,7 @@ int main(int argc,char*argv[]){
 	for(i=0;i<ei;i++){
 		pthread_join(arr_threads[i], NULL);
 	}
+	pthread_barrier_init(&barrier,NULL,hi);
 	printf("Se termino con todas las hebras\n");
 
  	/*int * S = intersectar(listas[4],listas[6],0,listas[4][0]+1);
@@ -351,13 +353,9 @@ int* intersectar(int* A, int* B, int inicio, int final){
 	int i,j,k = 1;
 	for(i=1;i<=A[0];i++){
 		if(BusquedaBinaria(B,inicio,final,A[i]) == 1){
-			printf("Se agrega el valor A[%d] = %d\n",i,A[i]);
 			aux[k] = A[i];
-			printf("A aux[%d] = %d\n",k,aux[k]);
 			k++;
-			aux[0] = aux[0]+1;
-		}
-	}
+			aux[0] = aux[0]+1;} }
 	aux = realloc(aux,aux[0]+1);
 	return aux;
 }
@@ -382,6 +380,8 @@ void *equipos(void *tDataEquipo) {
 			int i;
 			int *S = (int *)dataEquipo->lista;
 			int *S2 = (int*)dataEquipo->interseccion;
+			S2[0] = S[0]; //Se agrega la cantidad de elementos igual que el primero
+											//en el peor de los casos el tamaño será igual
 			int CH = (int)dataEquipo->cantidadHebras;
 			int* id = malloc(sizeof(CH));
 			pthread_t *arr_Concursantes = (pthread_t *)malloc(CH*sizeof(pthread_t));
@@ -407,6 +407,7 @@ void *equipos(void *tDataEquipo) {
 	}
 
 void *concursantes(void* tData){
+
 	t_data *concursante = (t_data*) tData;
 	pthread_mutex_lock(&lock2);
 	printf("\nSoy la hebra %d del equipo %d\n",concursante->id_hebra,concursante->id_equipo);
@@ -421,14 +422,35 @@ void *concursantes(void* tData){
 			int inicio = (concursante->id_hebra)*porcion+1;
 			int final = (concursante->id_hebra+1)*porcion;
 			printf("De la lista %d puedo tomar elementos desde %d hasta %d final\n",i,inicio,final);
-			printf("Esos valores son:\n");
 			pthread_mutex_lock(&lock3);
-					printf("Aquí hago la intersección y tengo que realizar la escritura en el arreglo auxiliar\n");
 					for(j = inicio; j<=final;j++) printf("lista[%d][%d] = %d\n",i,j,listas[i][j]);
 					for(j = 0; j<=concursante->listaGeneral[0];j++) printf(" %d\n",concursante->listaGeneral[j]);
 					int * aux = intersectar(concursante->listaGeneral,listas[i],inicio,final);
-					printf("Los valore intersectados son:\n");
-					for(j = 0; j<=aux[0];j++) printf(" %d \n",aux[j]);
+
+
+					printf("Los valores intersectados son:\n");
+					if(aux[0]!=0){
+						printf("El último del equipo %d es %d\n",concursante->id_equipo,ult[concursante->id_equipo]);
+						for(j = 0; j<=aux[0];j++){
+							if(j==0){
+									printf("La cantidad de intersectados son: %d\n",aux[0]);
+							}
+							else{
+								printf("Valor vector auxiliar %d ",aux[j]);
+								concursante->interseccionLocal[ult[concursante->id_equipo]] = aux[j];
+								printf("Escribiré en la posición del ultimo actual, que es: %d y j es: %d\n",ult[concursante->id_equipo],j);
+								ult[concursante->id_equipo] = ult[concursante->id_equipo]+1;
+								}
+						}
+
+						printf("\nLos elementos escritos son: \n");
+						quickSort(concursante->interseccionLocal+1,ult[concursante->id_equipo]-1);
+						concursante->interseccionLocal[0] = ult[concursante->id_equipo]-1;
+						concursante->interseccionLocal = realloc(concursante->interseccionLocal,concursante->interseccionLocal[0]+1);
+						for(j = 0; j<ult[concursante->id_equipo];j++){
+							printf("%d\n",concursante->interseccionLocal[j]);
+						}
+					}
 			pthread_mutex_unlock(&lock3);
 	}
 	pthread_mutex_unlock(&lock2);
