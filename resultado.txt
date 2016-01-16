@@ -1,0 +1,9 @@
+Número del equipo que obtuvo el primer lugar: 1
+Tiempo del equipo que obtuvo el primer lugar: 1.490400
+Número del equipo que obtuvo el segundo lugar: 2
+Tiempo del equipo que obtuvo el segundo lugar: 2.029400
+Número del equipo que obtuvo el tercer lugar: 6
+Tiempo del equipo que obtuvo el tercer lugar: 2.141300
+Hebra más eficiente: Hebra_0-Equipo_8
+Hebra más eficiente en promedio: Hebra_0-Equipo_1
+Intersección de las listas: Equipo 0-> 1 2 380 Equipo 1-> 1 2 380 Equipo 2-> 1 2 380 Equipo 3-> 1 2 380 Equipo 4-> 1 2 380 Equipo 5-> 1 2 380 Equipo 6-> 1 2 380 Equipo 7-> 1 2 380 Equipo 8-> 1 2 380 Equipo 9-> 1 2 380
