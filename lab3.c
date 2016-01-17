@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <time.h>
-
+#define CLOCK_PER_SECOND 100000000.0
 /*
  Esta es la estructura para poder pasar todos los datos cuando se realiza el
  llamado a la función
@@ -98,42 +98,8 @@ int BusquedaBinaria(int *k, int kInicial, int kFinal, int buscar);
 
 //Función que permite mostrar los resultados finales
 //Recibe como parámetro de entradas una arreglo que permite
-void escribirResultados(float **resultados,float **individual,float **promedio, int ** inter){
-	FILE* resultado = fopen("resultado.txt","w");
-	printf("Cantidad de hebras pum! %d\n",ei);
-	if(ei >=3 ){
-		quickSortMatFloat(resultados,ei);
-		quickSortMatFloat(individual,ei*hi);
-		quickSortMatFloat(promedio,ei*hi);
-		fprintf(resultado, "Número del equipo que obtuvo el primer lugar: %g\n", resultados[0][1]);
-		fprintf(resultado, "Tiempo del equipo que obtuvo el primer lugar: %f\n", resultados[0][0]);
-		fprintf(resultado, "Número del equipo que obtuvo el segundo lugar: %g\n", resultados[1][1]);
-		fprintf(resultado, "Tiempo del equipo que obtuvo el segundo lugar: %f\n", resultados[1][0]);
-		fprintf(resultado, "Número del equipo que obtuvo el tercer lugar: %g\n", resultados[2][1]);
-		fprintf(resultado, "Tiempo del equipo que obtuvo el tercer lugar: %f\n", resultados[2][0]);
-	} else if(2<=ei && ei<3){
-		fprintf(resultado, "Número del equipo que obtuvo el primer lugar: %g\n", resultados[0][1]);
-		fprintf(resultado, "Tiempo del equipo que obtuvo el primer lugar: %f\n", resultados[0][0]);
-		fprintf(resultado, "Número del equipo que obtuvo el segundo lugar: %g\n", resultados[1][1]);
-		fprintf(resultado, "Tiempo del equipo que obtuvo el segundo lugar: %f\n", resultados[1][0]);
-	} else if(ei<2){
-		printf("Entra en el caso de que haya menos de dos equipos\n");
-		fprintf(resultado, "Número del equipo que obtuvo el primer lugar: %g\n", resultados[0][1]);
-		fprintf(resultado, "Tiempo del equipo que obtuvo el primer lugar: %f\n", resultados[0][0]);
-	}
-	fprintf(resultado, "Hebra más eficiente: Hebra_%g-Equipo_%g\n",individual[0][1], individual[0][2]);
-	int i,j;
-	//for(i=0;i<ei*hi;i++)
-	fprintf(resultado, "Hebra más eficiente en promedio: Hebra_%g-Equipo_%g\n",promedio[0][1], promedio[0][2]);
+void escribirResultados(float **resultados,float **individual,float **promedio, int ** inter);
 
- 	fprintf(resultado,"Intersección de las listas:");
- 	for(i=0;i<ei;i++){
-		fprintf(resultado, " Equipo %d->",i);
-
-		for(j=1;j<=inter[i][0];j++)fprintf(resultado, " %d",inter[i][j]);
-	}
-	fclose(resultado);
-}
 /*Función principal*/
 int main(int argc,char*argv[]){
 
@@ -207,6 +173,7 @@ int main(int argc,char*argv[]){
   listas = leerListas(inputFile);
 	int i,j,k;
 	cantListas = contarLineas(fopen(inputFile,"r"));
+
 	printf("Cantidad de listas leídas %d\n",cantListas);
 
 	//Se eliminan los elementos repetidos de cada una de las listas leídas
@@ -242,7 +209,7 @@ int main(int argc,char*argv[]){
 
 	printf("\n");
 
-	ult = malloc(sizeof(int)*cantListas);
+	ult = malloc(sizeof(int)*ei);
 	for(i=0;i<ei;i++){
 		ult[i] = 1;
 	}
@@ -251,7 +218,7 @@ int main(int argc,char*argv[]){
 	barreras2 = malloc(sizeof(pthread_barrier_t)*ei);
 	resultadosTiempo = malloc(sizeof(float*)*ei); //Resultados de cada equipo
 	resultadosTiempoHebras = malloc(sizeof(float*)*ei*hi);
-	resultadosPromedioHebras = malloc(sizeof(float*)*ei*hi);
+	resultadosPromedioHebras = malloc(sizeof(float*)*ei*hi); //Se les asigna espacio a los lugares de la cosa
 	intersecciones = malloc(sizeof(int*)*ei);
 
 	for(i = 0; i< ei*hi;i++) resultadosTiempoHebras[i] = malloc(sizeof(int)*3);
@@ -307,12 +274,7 @@ int main(int argc,char*argv[]){
 		 resultadosPromedioHebras[i][0] = resultadosPromedioHebras[i][0]/resultadosPromedioHebras[i][3];
 	 }
 	escribirResultados(resultadosTiempo,resultadosTiempoHebras,resultadosPromedioHebras,intersecciones);
- 	/*int * S = intersectar(listas[4],listas[6],0,listas[4][0]+1);
-	printf("Se intersectan las listas 4 y 6\n");
-	printf("Cantidad de elementos de la intersección %d\n",S[0]);
-	for(i=1;i<=S[0];i++){
-		printf("Elementos S[%d] = %d\n",i,S[i]);
-	}*/
+
   return 0;
 }
 
@@ -340,7 +302,6 @@ int ** leerListas(char* entrada){
 		return conjuntoDeListas;
   }
 }
-
 
 int contarLineas(FILE* archivo){
   int i; //Cantidad de líneas
@@ -491,7 +452,7 @@ void *equipos(void *tDataEquipo) {
 				resultadosIndex[i] = i;
 			}
 
-			int* id = malloc(sizeof(CH));
+			int* id = malloc(sizeof(int)*CH);
 			pthread_t *arr_Concursantes = (pthread_t *)malloc(CH*sizeof(pthread_t));
 			printf("La cantidad de hebras del equipo %d es de %d\n",dataEquipo->id_equipo,CH);
 			for(i = 0;i<CH;i++) id[i] = i;
@@ -505,8 +466,7 @@ void *equipos(void *tDataEquipo) {
 				concursante->listaGeneral = S;
 				concursante->interseccionLocal = S2;
 				concursante->cantidadDeHebras = dataEquipo->cantidadHebras;
-				concursante->posResultados = resultadosIndex[concursante->id_equipo*hi+concursante->id_hebra];
-				printf("posResultados: %d\n",resultadosIndex[i]);
+				concursante->posResultados = concursante->id_equipo*hi+concursante->id_hebra;
 				pthread_create(&arr_Concursantes[i],NULL,&concursantes,(void *)concursante);
 			}
 
@@ -514,7 +474,7 @@ void *equipos(void *tDataEquipo) {
 		pthread_join(arr_Concursantes[i], NULL);
 	}
 	int fin = clock();
-	resultadosTiempo[dataEquipo->id_equipo][0] = (fin-start)/10000.0;
+	resultadosTiempo[dataEquipo->id_equipo][0] = (fin-start)/CLOCK_PER_SECOND;
 	pthread_exit(NULL);
 	}
 
@@ -522,76 +482,54 @@ void *concursantes(void* tData){
 
 	t_data *concursante = (t_data*) tData;
 	//pthread_mutex_lock(&lock2);
-	printf("\nSoy la hebra %d del equipo %d\n",concursante->id_hebra,concursante->id_equipo);
 	int i,j;
 			float start = clock();
 	for(i=1;i<cantListas;i++){
-			printf("*************************\nITERACION %d hebra %d\n************************ ",i,concursante->id_hebra);
 			int cantidadElementos = listas[i][0];
 			int	companeros = concursante->cantidadDeHebras;
-			printf("La cantidad de elementos de la lista %d es %d\n",i,cantidadElementos);
-			printf("La cantidad de compañeros de la hebra %d es %d\n",concursante->id_hebra,concursante->cantidadDeHebras);;
-/***************Se maneja el caso de lista no divisible****************************/
+			//Se maneja el caso de lista no divisible
 			int porcion = cantidadElementos/companeros;
 			int resto = cantidadElementos%companeros;
 			int inicio = 0;
 			int final = 0;
 			if(resto != 0 && concursante->id_hebra == companeros-1){
-				printf("Soy la última hebra, y tengo un bonus de: %d\n",resto);
 				inicio = (concursante->id_hebra)*porcion+1;
 				final = (concursante->id_hebra+1)*porcion+resto;
 			} else{
 				inicio = (concursante->id_hebra)*porcion+1;
 				final = (concursante->id_hebra+1)*porcion;
 			}
-
-			printf("De la lista %d puedo tomar elementos desde %d hasta %d \n",i,inicio,final);
-pthread_mutex_lock(&lock3);
-					for(j = inicio; j<=final;j++) printf("lista[%d][%d] = %d\n",i,j,listas[i][j]);
+			pthread_mutex_lock(&lock3);
 					int * aux = intersectar(concursante->listaGeneral,listas[i],inicio,final);
-
-
-					printf("Los valores intersectados son:\n");
 					if(aux[0]!=0){
-						printf("El último del equipo %d es %d\n",concursante->id_equipo,ult[concursante->id_equipo]);
 						for(j = 0; j<=aux[0];j++){
-							if(j==0){
-									printf("La cantidad de intersectados son: %d\n",aux[0]);
-							}
-							else{
-								printf("Valor vector auxiliar %d ",aux[j]);
+							if(j!=0){
 								concursante->interseccionLocal[ult[concursante->id_equipo]] = aux[j];
-								printf("Escribiré en la posición del ultimo actual, que es: %d y j es: %d\n",ult[concursante->id_equipo],j);
 								ult[concursante->id_equipo] = ult[concursante->id_equipo]+1;
 								}
 						}
 
-						printf("\nLos elementos escritos son:asdffffffffffffffffff \n");
 						quickSort(concursante->interseccionLocal+1,ult[concursante->id_equipo]-1);
 						concursante->interseccionLocal[0] = ult[concursante->id_equipo]-1;
 						concursante->interseccionLocal = realloc(concursante->interseccionLocal,concursante->interseccionLocal[0]+1);
-						for(j = 0; j<ult[concursante->id_equipo];j++){
-							printf("%d\n",concursante->interseccionLocal[j]);
-						}
-						printf("YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
 					}
-pthread_mutex_unlock(&lock3);
+					pthread_mutex_unlock(&lock3);
 
 					pthread_barrier_wait(&barreras1[concursante->id_equipo]);
 
 					if(concursante->id_hebra==0){
-						printf("Soy la hebra 0 del equipo %d\n",concursante->id_equipo);
+						printf("Soy la hebra 0 del equipo %d y mostraré los resutados de la iteración %d \n",concursante->id_equipo,i);
 						for(j=0;j<=concursante->interseccionLocal[0];j++) concursante->listaGeneral[j] = concursante->interseccionLocal[j];
 						concursante->listaGeneral = realloc(concursante->listaGeneral,concursante->listaGeneral[0]+1);
 						ult[concursante->id_equipo] = 1;
 						for(j=0;j<=concursante->interseccionLocal[0];j++){
-						printf("Contenido general %d\n",concursante->listaGeneral[j] );
+							printf("S[%d] = %d\n",j,concursante->listaGeneral[j] );
 						}
 					}
 					pthread_barrier_wait(&barreras2[concursante->id_equipo]);
 
 					float end = clock();
-					float total = (end-start)/10000.0;
+					float total = (end-start)/CLOCK_PER_SECOND;
 					resultadosTiempoHebras[concursante->posResultados][1] = concursante->id_hebra;
 					resultadosTiempoHebras[concursante->posResultados][2]  = concursante->id_equipo;
 					resultadosPromedioHebras[concursante->posResultados][1] = concursante->id_hebra;
@@ -607,4 +545,46 @@ pthread_mutex_unlock(&lock3);
 	}
 	//pthread_mutex_unlock(&lock2);
 	pthread_exit(NULL);
+}
+
+void escribirResultados(float **resultados,float **individual,float **promedio, int ** inter){
+	FILE* resultado = fopen("resultado.txt","w");
+	if(cantListas!=1){
+		if(ei >=3 ){
+			quickSortMatFloat(resultados,ei);
+			quickSortMatFloat(individual,ei*hi);
+			quickSortMatFloat(promedio,ei*hi);
+			fprintf(resultado, "Número del equipo que obtuvo el primer lugar: %g\n", resultados[0][1]);
+			fprintf(resultado, "Tiempo del equipo que obtuvo el primer lugar: %f\n", resultados[0][0]);
+			fprintf(resultado, "Número del equipo que obtuvo el segundo lugar: %g\n", resultados[1][1]);
+			fprintf(resultado, "Tiempo del equipo que obtuvo el segundo lugar: %f\n", resultados[1][0]);
+			fprintf(resultado, "Número del equipo que obtuvo el tercer lugar: %g\n", resultados[2][1]);
+			fprintf(resultado, "Tiempo del equipo que obtuvo el tercer lugar: %f\n", resultados[2][0]);
+		} else if(2<=ei && ei<3){
+			fprintf(resultado, "Número del equipo que obtuvo el primer lugar: %g\n", resultados[0][1]);
+			fprintf(resultado, "Tiempo del equipo que obtuvo el primer lugar: %f\n", resultados[0][0]);
+			fprintf(resultado, "Número del equipo que obtuvo el segundo lugar: %g\n", resultados[1][1]);
+			fprintf(resultado, "Tiempo del equipo que obtuvo el segundo lugar: %f\n", resultados[1][0]);
+		} else if(ei<2){
+			fprintf(resultado, "Número del equipo que obtuvo el primer lugar: %g\n", resultados[0][1]);
+			fprintf(resultado, "Tiempo del equipo que obtuvo el primer lugar: %f\n", resultados[0][0]);
+		}
+		fprintf(resultado, "Hebra más eficiente: Hebra_%g-Equipo_%g\n",individual[0][1], individual[0][2]);
+		int i,j;
+		//for(i=0;i<ei*hi;i++)
+		fprintf(resultado, "Hebra más eficiente en promedio: Hebra_%g-Equipo_%g\n",promedio[0][1], promedio[0][2]);
+
+	 	fprintf(resultado,"Intersección de las listas:");
+	 	for(i=0;i<ei;i++){
+			fprintf(resultado, " Equipo %d->",i);
+
+			for(j=1;j<=inter[i][0];j++){
+				if(inter[i][0]==0)	printf("NO hay nada \n");
+				fprintf(resultado, " %d",inter[i][j]);
+			}
+		}
+	} else{
+		printf("\n******************\nIntersección vacío. Ingrese más de un lista\n*********************\n");
+	}
+	fclose(resultado);
 }
